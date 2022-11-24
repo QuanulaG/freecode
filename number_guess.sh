@@ -1,8 +1,7 @@
 #!/bin/bash
 PSQL="psql -X --username=freecodecamp --dbname=number_guess --tuples-only -c"
-
+echo $($PSQL "TRUNCATE user_info")
 echo -e "\n~~~~WELCOME TO NUMBER GUESS~~~~\n"
-
 
 USER_INFO() {
 echo -e "Enter your username:"
@@ -18,58 +17,59 @@ USER_SEARCH() {
 		    echo -e "Welcome, $USERNAME! It looks like this is your first time here."
     else
         #GET EXISTING DATA
-        GAMES_INFO=$($PSQL "SELECT username, games_id, guesses FROM user_info WHERE username='$USERNAME'")
-        COUNT_RESULT=$($PSQL "SELECT COUNT(games_id) FROM user_info WHERE username='$USERNAME' GROUP BY username")
+        COUNT_RESULT=$($PSQL "SELECT COUNT(game_id) FROM user_info WHERE username='$USERNAME' GROUP BY username")
         MIN_RESULT=$($PSQL "SELECT MIN(guesses) FROM user_info WHERE username='$USERNAME' GROUP BY username")
-        echo "$GAMES_INFO" | while IFS="|" read GAMES_ID GUESSES
-        do 
-        echo -e "Welcome back, $(echo $USERNAME | sed -e 's/^[ \t]*//')! You have played $(echo $COUNT_RESULT | sed -e 's/^[ \t]*//') games, and your best game took $(echo $MIN_RESULT | sed -e 's/^[ \t]*//') guesses."
-        done
+        echo -e "Welcome back, $USERNAME! You have played $COUNT_RESULT games, and your best game took $MIN_RESULT guesses."
     fi
 }
 
-NUMBER=$((RANDOM % 1000 + 1))
-NUMBER_OF_GUESSES=0
-START_GAME() {
-#GUESS NUMBER
-echo -e "Guess the secret number between 1 and 1000:"
-read USER_GUESS
 
+
+GUESS() {
+echo -e "Guess the secret number between 1 and 1000:"
+NUMBER=$((RANDOM % 1000 + 1))
+#GUESS NUMBER
+read USER_GUESS
+let COUNT=0
+
+
+until [USER_GUESS -eq $NUMBER; do
 # GUESS NOT A NUMBER
-if [[ ! $USER_GUESS =~ ^[0-9]*$ ]]
-then
-    let NUMBER_OF_GUESSES++
-    echo -e "That is not an integer, guess again:"
-    START_GAME
+while [[ ! $USER_GUESS =~ ^[0-9]*$ ]]
+do
+echo -e "That is not an integer, guess again:"
+    READ $USER_GUESS
+done
 #GUESS IS HIGHER
-    else if [[ $USER_GUESS -gt $NUMBER ]]
-    then
-    let NUMBER_OF_GUESSES++
-  echo -e "It's lower than that, guess again:"
-  START_GAME
+    while [[ $USER_GUESS -gt $NUMBER ]]
+    do
+   
+    echo -e "It's lower than that, guess again:"
+    READ $USER_GUESS
+    let $COUNT++
+    done
 # GUESS IS LOWER   
-    else if [[ $USER_GUESS -lt $NUMBER ]]
-    then
-    let NUMBER_OF_GUESSES++
-  echo -e "It's higher than that, guess again:"
-  START_GAME
+    while [[ $USER_GUESS -lt $NUMBER ]]
+    do
+    
+    echo -e "It's higher than that, guess again:"
+    READ $USER_GUESS
+    let $COUNT++
+    done
+    done
 # GUESS IS CORRECT   
-    else if [[ $USER_GUESS = $NUMBER ]]
-    then
-     echo -e "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $NUMBER. Nice Job!"
-fi
+    echo -e "You guessed it in $COUNT tries. The secret number was $NUMBER. Nice Job!"
 }
 
 INSERT_GAME_RESULT() {
 if [[ -z $USER_RESULT ]]
 then
-    INSERT_NEW_USER_GAME_DETAILS=$($PSQL "UPDATE user_info SET guesses = $NUMBER_OF_GUESSES WHERE username = '$USERNAME'")
+    INSERT_NEW_USER_GAME_DETAILS=$($PSQL "UPDATE user_info SET guesses = $COUNT WHERE username = '$USERNAME'")
 else
-    INSERT_NEW_GAME_DETAILS=$($PSQL "INSERT INTO user_info(guesses) VALUES($NUMBER_OF_GUESSES)")
+    INSERT_NEW_GAME_DETAILS=$($PSQL "INSERT INTO user_info(guesses) VALUES($COUNT)")
 fi
 }
-
 USER_INFO
 USER_SEARCH
-START_GAME
+GUESS
 INSERT_GAME_RESULT
