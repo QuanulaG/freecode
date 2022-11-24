@@ -50,12 +50,34 @@ SET default_table_access_method = heap;
 CREATE TABLE public.user_info (
     user_id integer NOT NULL,
     guesses integer,
-    games_id integer,
-    username character varying(50)
+    username character varying(50),
+    game_id integer NOT NULL
 );
 
 
 ALTER TABLE public.user_info OWNER TO freecodecamp;
+
+--
+-- Name: user_info_game_id_seq; Type: SEQUENCE; Schema: public; Owner: freecodecamp
+--
+
+CREATE SEQUENCE public.user_info_game_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_info_game_id_seq OWNER TO freecodecamp;
+
+--
+-- Name: user_info_game_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: freecodecamp
+--
+
+ALTER SEQUENCE public.user_info_game_id_seq OWNED BY public.user_info.game_id;
+
 
 --
 -- Name: user_info_user_id_seq; Type: SEQUENCE; Schema: public; Owner: freecodecamp
@@ -87,15 +109,30 @@ ALTER TABLE ONLY public.user_info ALTER COLUMN user_id SET DEFAULT nextval('publ
 
 
 --
+-- Name: user_info game_id; Type: DEFAULT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.user_info ALTER COLUMN game_id SET DEFAULT nextval('public.user_info_game_id_seq'::regclass);
+
+
+--
 -- Data for Name: user_info; Type: TABLE DATA; Schema: public; Owner: freecodecamp
 --
+
+
+
+--
+-- Name: user_info_game_id_seq; Type: SEQUENCE SET; Schema: public; Owner: freecodecamp
+--
+
+SELECT pg_catalog.setval('public.user_info_game_id_seq', 661, true);
 
 
 --
 -- Name: user_info_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: freecodecamp
 --
 
-SELECT pg_catalog.setval('public.user_info_user_id_seq', 6296, true);
+SELECT pg_catalog.setval('public.user_info_user_id_seq', 6957, true);
 
 
 --
